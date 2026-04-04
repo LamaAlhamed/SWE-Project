@@ -12,7 +12,7 @@ body { font-family: 'Tajawal', sans-serif; background: var(--cream); min-height:
 nav { background: var(--maroon); padding: 16px 48px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 20px rgba(92,31,58,0.3); }
 .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
 .logo img { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; }
-.logo-text { font-size: 22px; font-weight: 800; color: white; }
+.logo-text { font-size: 15px; font-weight: 600; color: white; }
 .admin-badge { background: var(--gold); color: white; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 50px; }
 .btn-back { background: rgba(255,255,255,0.15); color: white; text-decoration: none; font-size: 14px; font-weight: 600; padding: 8px 20px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.3); }
 
@@ -36,6 +36,15 @@ input:focus, select:focus, textarea:focus { border-color: var(--maroon); box-sha
 select { cursor: pointer; }
 textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
 
+
+.file-upload { border: 2px dashed #E8D6DC; border-radius: 12px; padding: 32px; text-align: center; background: #FFF5F0; cursor: pointer; transition: border .2s; }
+.file-upload:hover { border-color: var(--maroon); }
+.file-upload-icon { font-size: 36px; margin-bottom: 12px; }
+.file-upload p { font-size: 14px; color: var(--text-mid); margin-bottom: 8px; }
+.file-upload span { font-size: 12px; color: var(--text-mid); opacity: 0.7; }
+input[type="file"] { display: none; }
+
+
 .btn-group { display: flex; gap: 12px; margin-top: 8px; }
 .btn-submit { flex: 1; padding: 15px; background: linear-gradient(135deg, var(--maroon), var(--maroon-light)); color: white; border: none; border-radius: 12px; font-family: 'Tajawal', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform .2s, box-shadow .2s; }
 .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(92,31,58,0.3); }
@@ -47,7 +56,7 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
 <nav>
   <a href="index.html" class="logo">
     <img src="logo.PNG" alt="أثر">
-    
+        <p class="logo-text">أترك أثرك..وساعد غيرك</p>
   </a>
   <div style="display:flex;align-items:center;gap:12px;">
     <span class="admin-badge">مدير النظام</span>
@@ -97,8 +106,13 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
     </div>
 
     <div class="form-group">
-      <label>المراجع <span class="required">*</span></label>
-      <textarea placeholder="أدخل المراجع والكتب المقررة..." style="min-height:90px;"></textarea>
+      <label>رفع ملف <span class="optional">*</span></label>
+      <label class="file-upload" for="file-input">
+        <div class="file-upload-icon">📎</div>
+        <p>اضغط لرفع الملف أو اسحبه هنا</p>
+        <span>.pdf,.doc,.docx,.ppt,.pptx </span>
+      </label>
+      <input type="file" id="file-input" accept=".pdf,.doc,.docx,.ppt,.pptx">
     </div>
 
     <div class="btn-group">
@@ -107,5 +121,6 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
     </div>
   </div>
 </div>
+<script src="athar-ui.js"></script>
 </body>
 </html>
