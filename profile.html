@@ -12,7 +12,7 @@ body { font-family: 'Tajawal', sans-serif; background: var(--cream); }
 nav { background: var(--maroon); padding: 16px 48px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
 .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
 .logo img { width: 44px; height: 44px; object-fit: contain; border-radius: 8px; }
-.logo-text { font-size: 20px; font-weight: 800; color: white; }
+.logo-text { font-size: 15px; font-weight: 600; color: white; }
 .nav-links { display: flex; align-items: center; gap: 16px; }
 .nav-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 14px; }
 .btn-logout { background: rgba(255,255,255,0.12); color: white; text-decoration: none; padding: 8px 18px; border-radius: 8px; font-size: 14px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; font-family: 'Tajawal', sans-serif; }
@@ -47,13 +47,21 @@ nav { background: var(--maroon); padding: 16px 48px; display: flex; align-items:
 
 footer { background: #2A0F1A; padding: 24px; text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 20px; }
 footer strong { color: var(--salmon); }
+
+.tabs { display: flex; gap: 4px; background: white; border-radius: 14px; padding: 6px; box-shadow: 0 2px 12px rgba(92,31,58,0.06); margin-bottom: 28px; border: 1px solid rgba(92,31,58,0.08); }
+.tab-btn { flex: 1; padding: 10px 16px; border: none; background: none; border-radius: 10px; font-family: 'Tajawal', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-mid); cursor: pointer; transition: all .2s; }
+.tab-btn.active { background: linear-gradient(135deg, var(--maroon), var(--maroon-light)); color: white; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.liked-badge { background: rgba(232,135,106,0.12); color: var(--salmon); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 50px; margin-right: 8px; }
+
 </style>
 </head>
 <body>
 <nav>
   <a href="index.html" class="logo">
     <img src="logo.PNG" alt="أثر">
-    
+    <p class="logo-text">أترك أثرك..وساعد غيرك</p>
   </a>
   <div class="nav-links">
     <a href="index.html" class="nav-link">الرئيسية</a>
@@ -66,10 +74,10 @@ footer strong { color: var(--salmon); }
     <div class="profile-avatar">ر</div>
     <div>
       <div class="profile-name">ريم العتيبي</div>
-      <div class="profile-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="710314141c3102050415141f055f1a02045f1415045f0210">[email&#160;protected]</a></div>
+      <div class="profile-email"> Reem@student.ksu.edu.sa </div>
       <div class="profile-stats">
         <div class="stat"><span class="stat-num">٣</span><div class="stat-label">تجاربي</div></div>
-        <div class="stat"><span class="stat-num">١٢</span><div class="stat-label">إعجاب</div></div>
+        <div class="stat"><span class="stat-num">٢</span><div class="stat-label">إعجاب</div></div>
       </div>
     </div>
   </div>
@@ -78,41 +86,56 @@ footer strong { color: var(--salmon); }
 <div class="content">
   <div class="section-title">تجاربي الأكاديمية</div>
 
-  <div class="experience-card">
-    <div class="exp-course">IT 210 — مقدمة في قواعد البيانات</div>
-    <div class="exp-text">المقرر ممتع جداً ومفيد، لكنه يحتاج تركيز في موضوع التطبيع. أنصح بمراجعة W3Schools بشكل منتظم والبدء بالمشروع مبكراً.</div>
-    <div class="exp-footer">
-      <span class="exp-date">مارس ٢٠٢٦</span>
-      <div class="exp-actions">
-        <button class="btn-edit">تعديل</button>
-        <button class="btn-delete">حذف</button>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('mine')"> تجاربي</button>
+    <button class="tab-btn" onclick="switchTab('liked')"> إعجاباتي</button>
+  </div>
+
+  <!-- Reviews tab -->
+  <div id="tab-mine" class="tab-panel active">
+    <div class="experience-card">
+      <div class="exp-course">IT 222 — مقدمة في قواعد البيانات</div>
+      <div class="exp-text">المقرر ممتع جداً ومفيد، لكنه يحتاج تركيز في موضوع التطبيع. أنصح بمراجعة W3Schools بشكل منتظم والبدء بالمشروع مبكراً.</div>
+      <div class="exp-footer">
+        <span class="exp-date">مارس ٢٠٢٦</span>
+        <div class="exp-actions">
+          <button class="btn-edit" onclick="editExp(this)">تعديل</button>
+          <button class="btn-delete">حذف</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="experience-card">
+      <div class="exp-course">CSC 212 — هياكل البيانات</div>
+      <div class="exp-text">مقرر صعب لكن مهم جداً. الامتحان يركز على التحليل والتطبيق. لازم تفهمين كل هيكل بيانات بشكل عميق وتطبقينه على أمثلة.</div>
+      <div class="exp-footer">
+        <span class="exp-date">فبراير ٢٠٢٦</span>
+        <div class="exp-actions">
+          <button class="btn-edit" onclick="editExp(this)">تعديل</button>
+          <button class="btn-delete">حذف</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="experience-card">
+      <div class="exp-course">CSC 113 — البرمجة الكائنية</div>
+      <div class="exp-text">إذا فهمتِ مفهوم الوراثة والتعددية الشكلية بشكل صحيح باقي المقرر سهل. المشاريع العملية تساعد كثيراً.</div>
+      <div class="exp-footer">
+        <span class="exp-date">يناير ٢٠٢٦</span>
+        <div class="exp-actions">
+          <button class="btn-edit" onclick="editExp(this)">تعديل</button>
+          <button class="btn-delete">حذف</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="experience-card">
-    <div class="exp-course">IT 220 — هياكل البيانات</div>
-    <div class="exp-text">مقرر صعب لكن مهم جداً. الامتحان يركز على التحليل والتطبيق. لازم تفهمين كل هيكل بيانات بشكل عميق وتطبقينه على أمثلة.</div>
-    <div class="exp-footer">
-      <span class="exp-date">فبراير ٢٠٢٦</span>
-      <div class="exp-actions">
-        <button class="btn-edit">تعديل</button>
-        <button class="btn-delete">حذف</button>
-      </div>
-    </div>
-  </div>
+  
 
-  <div class="experience-card">
-    <div class="exp-course">IT 230 — البرمجة الكائنية</div>
-    <div class="exp-text">إذا فهمتِ مفهوم الوراثة والتعددية الشكلية بشكل صحيح باقي المقرر سهل. المشاريع العملية تساعد كثيراً.</div>
-    <div class="exp-footer">
-      <span class="exp-date">يناير ٢٠٢٦</span>
-      <div class="exp-actions">
-        <button class="btn-edit">تعديل</button>
-        <button class="btn-delete">حذف</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<footer><p>جميع الحقو
+<footer>
+  <p>جميع الحقوق محفوظة &copy; 2026 — <strong>منصة أثر</strong> | جامعة الملك سعود — قسم تقنية المعلومات</p>
+</footer>
+<script src="athar-ui.js"></script>
+</body>
+</html>
