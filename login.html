@@ -17,7 +17,7 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(160deg, #
 nav { background: var(--maroon); padding: 16px 48px; display: flex; align-items: center; justify-content: space-between; }
 .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
 .logo img { width: 44px; height: 44px; object-fit: contain; border-radius: 8px; }
-.logo-text { font-size: 20px; font-weight: 800; color: white; }
+.logo-text { font-size: 15px; font-weight: 600; color: white; }
 .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
 .card { background: white; border-radius: 24px; padding: 48px 40px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
 .card-header { text-align: center; margin-bottom: 36px; }
@@ -43,7 +43,7 @@ footer strong { color: var(--salmon); }
 <nav>
   <a href="index.html" class="logo">
     <img src="logo.PNG" alt="أثر">
-    
+        <p class="logo-text">أترك أثرك..وساعد غيرك</p>
   </a>
 </nav>
 <div class="main">
@@ -60,11 +60,12 @@ footer strong { color: var(--salmon); }
       <label>كلمة المرور</label>
       <input type="password" placeholder="أدخل كلمة المرور">
     </div>
-    <button class="btn-main">تسجيل الدخول</button>
+    <button class="btn-main" onclick="location.href='profile.html'">تسجيل الدخول</button>
     <div class="divider">أو</div>
     <div class="link-text">ليس لديك حساب؟ <a href="register.html">إنشاء حساب جديد</a></div>
   </div>
 </div>
 <footer><p>جميع الحقوق محفوظة &copy; 2026 — <strong>منصة أثر</strong></p></footer>
+<script src="athar-ui.js"></script>
 </body>
 </html>
