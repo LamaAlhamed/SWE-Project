@@ -1,4 +1,3 @@
-
 const IS_ADMIN_MODE = true; 
 const PAGE = (() => {
   const p = location.pathname.split('/').pop() || 'index.html';
@@ -323,5 +322,142 @@ document.addEventListener('DOMContentLoaded', () => {
     case 'add-course':     initAddCourse();     break;
     case 'profile':        initProfile();       break;
     case 'admin':          initAdmin();         break;
+  }
+});
+
+// Edit profile
+
+let isEditingProfile = false;
+
+function toggleProfileEdit() {
+  const nameEl = document.getElementById("profileName");
+  const emailEl = document.getElementById("profileEmail");
+  const icon = document.getElementById("editProfileIcon");
+
+  if (!isEditingProfile) {
+    const currentName = nameEl.textContent.trim();
+    const currentEmail = emailEl.textContent.trim();
+
+    nameEl.innerHTML = `<input type="text" id="nameInput" class="profile-input" value="${currentName}">`;
+    emailEl.innerHTML = `<input type="email" id="emailInput" class="profile-input" value="${currentEmail}">`;
+
+    icon.src = "images/save.png";
+    icon.alt = "حفظ";
+    isEditingProfile = true;
+  } else {
+    const newName = document.getElementById("nameInput").value.trim();
+    const newEmail = document.getElementById("emailInput").value.trim();
+
+    if (newName === "" || newEmail === "") {
+      alert("الرجاء تعبئة الاسم والإيميل");
+      return;
+    }
+
+    nameEl.textContent = newName;
+    emailEl.textContent = newEmail;
+
+    icon.src = "images/edit.png";
+    icon.alt = "تعديل";
+    isEditingProfile = false;
+  }
+}
+
+//Search course
+function searchCourse() {
+  const input = document.getElementById("courseSearchInput");
+  const query = input.value.trim();
+
+  if (query === "") {
+    alert("اكتبي اسم المقرر أو رمزه أولاً");
+    return;
+  }
+
+  window.location.href = "courses.html?search=" + encodeURIComponent(query);
+}
+
+document.getElementById("courseSearchInput").addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    searchCourse();
+  }
+});
+
+
+const courses = [
+  { code: "IT 222", name: "مقدمة في قواعد البيانات", level: 3 },
+  { code: "CSC 212", name: "هياكل البيانات", level: 3 },
+  { code: "CSC 113", name: "البرمجة الكائنية", level: 3 },
+  { code: "SWE 214", name: "هندسة المتطلبات", level: 4 },
+  { code: "IT 324", name: "إدارة قواعد البيانات", level: 5 },
+  { code: "IT 371", name: "أمن المعلومات", level: 6 },
+  { code: "SWE 363", name: "تطوير تطبيقات الويب", level: 6 },
+  { code: "IT 490", name: "مشروع التخرج", level: 8 }
+];
+
+const searchInput = document.getElementById("courseSearchInput");
+const suggestionsBox = document.getElementById("searchSuggestions");
+
+searchInput.addEventListener("input", function () {
+  const query = this.value.trim().toLowerCase();
+
+  if (query === "") {
+    suggestionsBox.style.display = "none";
+    suggestionsBox.innerHTML = "";
+    return;
+  }
+
+  const matchedCourses = courses.filter(course =>
+    course.code.toLowerCase().includes(query) ||
+    course.name.toLowerCase().includes(query)
+  );
+
+  if (matchedCourses.length === 0) {
+    suggestionsBox.innerHTML = `<div class="suggestion-item">لا توجد نتائج</div>`;
+    suggestionsBox.style.display = "block";
+    return;
+  }
+
+  suggestionsBox.innerHTML = matchedCourses.map(course => `
+    <div class="suggestion-item" onclick="selectCourse('${course.code}', '${course.name}', ${course.level})">
+      <span class="suggestion-code">${course.code}</span>
+      <span class="suggestion-name">${course.name}</span>
+    </div>
+  `).join("");
+
+  suggestionsBox.style.display = "block";
+});
+
+function selectCourse(code, name, level) {
+  searchInput.value = code + " - " + name;
+  suggestionsBox.style.display = "none";
+
+  searchInput.dataset.selectedCode = code;
+  searchInput.dataset.selectedLevel = level;
+}
+
+function searchCourse() {
+  const selectedCode = searchInput.dataset.selectedCode;
+  const query = searchInput.value.trim();
+
+  if (query === "") {
+    alert("اكتبي اسم المقرر أو رمزه أولاً");
+    return;
+  }
+
+  if (selectedCode) {
+    window.location.href = "course-details.html?course=" + encodeURIComponent(selectedCode);
+  } else {
+    window.location.href = "course-details.html?search=" + encodeURIComponent(query);
+  }
+}
+
+searchInput.addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    searchCourse();
+  }
+});
+
+document.addEventListener("click", function(event) {
+  if (!event.target.closest(".course-search-wrapper")) {
+    suggestionsBox.style.display = "none";
   }
 });
