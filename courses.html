@@ -1,3 +1,45 @@
+<?php
+include 'AtharDB.php';
+
+$level = isset($_GET['level']) ? (int) $_GET['level'] : 3;
+
+$sql = "
+    SELECT c.courseID, c.courseCode, c.courseName, c.courseDescription, c.level, c.track,
+           COUNT(e.experienceID) AS experienceCount
+    FROM course c
+    LEFT JOIN experience e ON c.courseID = e.courseID
+    WHERE c.level = $level
+    GROUP BY c.courseID
+    ORDER BY c.courseCode ASC
+";
+
+$result = mysqli_query($connection, $sql);
+
+function getTrackClass($track) {
+    $track = trim($track);
+
+    if ($track === 'الأمن السيبراني' || strtolower($track) === 'cybersecurity' || strtolower($track) === 'cyber') {
+        return 'cyber';
+    } elseif ($track === 'الذكاء الاصطناعي' || strtolower($track) === 'ai') {
+        return 'ai';
+    } elseif ($track === 'الشبكات' || strtolower($track) === 'networks') {
+        return 'networks';
+    } else {
+        return 'general';
+    }
+}
+
+function getTrackLabel($track) {
+    $track = trim($track);
+
+    if ($track === 'Cybersecurity') return 'الأمن السيبراني';
+    if ($track === 'AI') return 'الذكاء الاصطناعي';
+    if ($track === 'Networks') return 'الشبكات';
+    if ($track === '' || strtolower($track) === 'general') return 'عام';
+
+    return $track;
+}
+?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -63,43 +105,42 @@ footer strong { color: var(--salmon); }
   box-shadow: 0 2px 8px rgba(92,31,58,0.06);
 }
 
-.course-track.general {
-  background: #FFF5F0;
-  color: #5C1F3A;
-}
+.course-track.general { background: #FFF5F0; color: #5C1F3A; }
+.course-track.cyber { background: rgba(124,45,79,0.10); color: #7C2D4F; }
+.course-track.networks { background: rgba(232,135,106,0.14); color: #A24E3B; }
+.course-track.ai { background: rgba(201,150,58,0.12); color: #8A6518; }
 
-.course-track.cyber {
-  background: rgba(124,45,79,0.10);
-  color: #7C2D4F;
+.empty-message {
+  background: white;
+  border-radius: 16px;
+  padding: 40px 60px;
+  text-align: center;
+  color: var(--text-mid);
+  box-shadow: 0 2px 12px rgba(92,31,58,0.08);
+  max-width: 850px;
+  width: 100%;
+  margin: 40px auto;
+  grid-column: 1 / -1;
+  font-size: 22px;
+  line-height: 1.8;
 }
-
-.course-track.networks {
-  background: rgba(232,135,106,0.14);
-  color: #A24E3B;
-}
-
-.course-track.ai {
-  background: rgba(201,150,58,0.12);
-  color: #8A6518;
-}
-
 </style>
 </head>
 <body>
 <nav>
-  <a href="index.html" class="logo">
+  <a href="index.php" class="logo">
     <img src="images/logo.PNG" alt="أثر">
-        <p class="logo-text">أترك أثرك..وساعد غيرك</p>
+    <p class="logo-text">أترك أثرك..وساعد غيرك</p>
   </a>
   <div class="nav-links">
-    <a href="index.html" class="nav-link">الرئيسية</a>
-    <a href="profile.html" class="btn-profile">حسابي</a>
+    <a href="index.php" class="nav-link">الرئيسية</a>
+    <a href="profile.php" class="btn-profile">حسابي</a>
   </div>
 </nav>
 
 <div class="page-header">
-  <div class="breadcrumb"><a href="index.html">الرئيسية</a> ← <span>المستوى الثالث</span></div>
-  <h1>مقررات المستوى الثالث</h1>
+  <div class="breadcrumb"><a href="index.php">الرئيسية</a> ← <span>المستوى <?php echo $level; ?></span></div>
+  <h1>مقررات المستوى <?php echo $level; ?></h1>
   <p>استعرض جميع المقررات المتاحة في هذا المستوى</p>
 </div>
 
@@ -107,88 +148,37 @@ footer strong { color: var(--salmon); }
   <div class="section-title">المقررات الدراسية</div>
   <div class="courses-grid">
 
-  <a href="course-details.html" class="course-card">
-  <div class="course-meta-top">
-    <div class="course-track general">عام</div>
-    <div class="course-code">IT 222</div>
-  </div>
-  <div class="course-name">مبادئ قواعد البيانات</div>
-  <div class="course-desc">مفاهيم قواعد البيانات العلائقية وتصميمها وتطبيقها باستخدام SQL</div>
-  <div class="course-meta">
-    <span class="course-exp">١٢ تجربة</span>
-    <div class="course-arrow">←</div>
-  </div>
-</a>
+    <?php if ($result && mysqli_num_rows($result) > 0): ?>
+        <?php while ($row = mysqli_fetch_assoc($result)): ?>
+            <a href="course-details.php?id=<?php echo $row['courseID']; ?>" class="course-card">
+              <div class="course-meta-top">
+                <div class="course-track <?php echo getTrackClass($row['track']); ?>">
+                  <?php echo htmlspecialchars(getTrackLabel($row['track'])); ?>
+                </div>
+                <div class="course-code"><?php echo htmlspecialchars($row['courseCode']); ?></div>
+              </div>
 
-<a href="course-details.html" class="course-card">
-  <div class="course-meta-top">
-    <div class="course-track general">عام</div>
-    <div class="course-code">CSC 212</div>
-  </div>
-  <div class="course-name">تراكيب بيانات</div>
-  <div class="course-desc">دراسة هياكل البيانات الأساسية وتحليل تعقيد الخوارزميات</div>
-  <div class="course-meta">
-    <span class="course-exp">٨ تجارب</span>
-    <div class="course-arrow">←</div>
-  </div>
-</a>
+              <div class="course-name"><?php echo htmlspecialchars($row['courseName']); ?></div>
 
-<a href="course-details.html" class="course-card">
-  <div class="course-meta-top">
-    <div class="course-track general">عام</div>
-    <div class="course-code">CSC 113</div>
-  </div>
-  <div class="course-name">برمجة حاسبات</div>
-  <div class="course-desc">مفاهيم البرمجة الكائنية التوجه باستخدام Java</div>
-  <div class="course-meta">
-    <span class="course-exp">١٥ تجربة</span>
-    <div class="course-arrow">←</div>
-  </div>
-</a>
+              <div class="course-desc">
+                <?php echo htmlspecialchars(mb_strimwidth($row['courseDescription'], 0, 100, '...')); ?>
+              </div>
 
-<a href="course-details.html" class="course-card">
-  <div class="course-meta-top">
-   <div class="course-track general">عام</div>
-    <div class="course-code">IT 328</div>
-  </div>
-  <div class="course-name">مبادئ شبكات الحاسب</div>
-  <div class="course-desc">أساسيات شبكات الحاسب وبروتوكولات الاتصال</div>
-  <div class="course-meta">
-    <span class="course-exp">٦ تجارب</span>
-    <div class="course-arrow">←</div>
-  </div>
-</a>
-
-<a href="course-details.html" class="course-card">
-  <div class="course-meta-top">
-    <div class="course-track general">عام</div>
-    <div class="course-code">IT 320</div>
-  </div>
-  <div class="course-name">هندسة البرمجيات</div>
-  <div class="course-desc">دورة حياة تطوير البرمجيات ومنهجيات إدارة المشاريع</div>
-  <div class="course-meta">
-    <span class="course-exp">١٠ تجارب</span>
-    <div class="course-arrow">←</div>
-  </div>
-</a>
-
-<a href="course-details.html" class="course-card">
-  <div class="course-meta-top">
-    <div class="course-track cyber">الأمن السيبراني</div>
-    <div class="course-code">IT 371</div>
-  </div>
-  <div class="course-name">أمن التطبيقات</div>
-  <div class="course-desc">مبادئ أمن التطبيقات والتشفير وحماية البيانات</div>
-  <div class="course-meta">
-    <span class="course-exp">٩ تجارب</span>
-    <div class="course-arrow">←</div>
-  </div>
-</a>
+              <div class="course-meta">
+                <span class="course-exp"><?php echo $row['experienceCount']; ?> تجربة</span>
+                <div class="course-arrow">←</div>
+              </div>
+            </a>
+        <?php endwhile; ?>
+    <?php else: ?>
+        <div class="empty-message">
+          لا توجد مقررات مضافة لهذا المستوى حالياً.
+        </div>
+    <?php endif; ?>
 
   </div>
 </div>
 
 <footer><p>جميع الحقوق محفوظة &copy; 2026 — <strong>منصة أثر</strong> | جامعة الملك سعود</p></footer>
-<script src="athar-ui.js"></script>
 </body>
 </html>
