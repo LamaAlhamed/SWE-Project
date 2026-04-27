@@ -2,7 +2,7 @@
 session_start();
 require_once 'AtharDB.php';
 
-// يجب أن تكون مسجلة دخول
+
 if (!isset($_SESSION['studentID'])) {
     header("Location: login.php");
     exit();
@@ -10,7 +10,7 @@ if (!isset($_SESSION['studentID'])) {
 
 $studentID = $_SESSION['studentID'];
 
-// جلب experienceID من URL
+
 $experienceID = isset($_GET['experienceID']) ? intval($_GET['experienceID']) : 0;
 
 if ($experienceID <= 0) {
@@ -18,7 +18,6 @@ if ($experienceID <= 0) {
     exit();
 }
 
-// جلب التجربة مع التأكد أنها تخص الطالبة الحالية
 $stmt = mysqli_prepare($connection,
     "SELECT e.experienceID, e.experienceContent, e.studyNote, e.courseID,
             c.courseCode, c.courseName, c.level
@@ -31,7 +30,6 @@ $result = mysqli_stmt_get_result($stmt);
 $experience = mysqli_fetch_assoc($result);
 mysqli_stmt_close($stmt);
 
-// إذا التجربة مو موجودة أو مو تبع الطالبة
 if (!$experience) {
     header("Location: profile.php");
     exit();
@@ -40,20 +38,19 @@ if (!$experience) {
 $errors = [];
 $success = false;
 
-// معالجة الفورم
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $experienceContent = trim($_POST['experienceContent'] ?? '');
     $studyNote = $experience['studyNote']; // نحتفظ بالملف القديم افتراضياً
     $removeFile = isset($_POST['removeFile']) && $_POST['removeFile'] === '1';
 
-    // التحقق من الوصف
+    
     if (empty($experienceContent)) {
         $errors[] = 'وصف التجربة مطلوب';
     } elseif (mb_strlen($experienceContent) < 20) {
         $errors[] = 'وصف التجربة يجب أن يكون 20 حرف على الأقل';
     }
 
-    // حذف الملف القديم إذا طلبت
+   
     if ($removeFile) {
         if (!empty($experience['studyNote']) && file_exists($experience['studyNote'])) {
             unlink($experience['studyNote']);
@@ -61,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $studyNote = '';
     }
 
-    // رفع ملف جديد إذا موجود
+  
     if (isset($_FILES['studyNote']) && $_FILES['studyNote']['error'] === UPLOAD_ERR_OK) {
         $allowedTypes = ['application/pdf', 'application/msword',
                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -96,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // تحديث في قاعدة البيانات
+    
     if (empty($errors)) {
         $stmt = mysqli_prepare($connection,
             "UPDATE experience SET experienceContent = ?, studyNote = ? 
@@ -251,7 +248,7 @@ footer strong { color: var(--salmon); }
   </div>
 
   <?php else: ?>
-  <!-- عرض التجربة المحدثة بعد النجاح -->
+  
   <div class="form-card">
     <div style="margin-bottom:16px;">
       <span style="font-size:12px;font-weight:700;color:var(--salmon);letter-spacing:1px;">
@@ -278,7 +275,7 @@ footer strong { color: var(--salmon); }
 <footer><p>جميع الحقوق محفوظة &copy; 2026 — <strong>منصة أثر</strong></p></footer>
 
 <script>
-// عداد الأحرف
+
 const textarea = document.getElementById('expContent');
 const charCount = document.getElementById('charCount');
 if (textarea) {
@@ -288,7 +285,7 @@ if (textarea) {
     });
 }
 
-// اسم الملف الجديد
+
 const fileInput = document.getElementById('file-input');
 const fileNameDiv = document.getElementById('fileName');
 if (fileInput) {
@@ -300,7 +297,7 @@ if (fileInput) {
     });
 }
 
-// حذف الملف الموجود
+    
 function removeExistingFile() {
     const existingFile = document.getElementById('existingFile');
     const removeInput = document.getElementById('removeFile');
