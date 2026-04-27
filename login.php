@@ -4,17 +4,17 @@ include("AtharDB.php");
 
 if (isset($_POST['login'])) {
 
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
 
-    //  TRY STUDENT
-    $stmt = $conn->prepare("SELECT * FROM student WHERE studentName=?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // ===== TRY STUDENT =====
+    $stmt = mysqli_prepare($connection, "SELECT * FROM student WHERE studentName=?");
+    mysqli_stmt_bind_param($stmt, "s", $username);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
 
-    if ($result->num_rows == 1) {
-        $user = $result->fetch_assoc();
+    if (mysqli_num_rows($result) == 1) {
+        $user = mysqli_fetch_assoc($result);
 
         if (password_verify($password, $user['password'])) {
 
@@ -26,30 +26,28 @@ if (isset($_POST['login'])) {
         }
     }
 
-    // TRY ADMIN 
-    $stmt = $conn->prepare("SELECT * FROM admin WHERE adminName=?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // ===== TRY ADMIN =====
+    $stmt = mysqli_prepare($connection, "SELECT * FROM admin WHERE adminName=?");
+    mysqli_stmt_bind_param($stmt, "s", $username);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
 
-    if ($result->num_rows == 1) {
-        $admin = $result->fetch_assoc();
+    if (mysqli_num_rows($result) == 1) {
+        $admin = mysqli_fetch_assoc($result);
 
         if (password_verify($password, $admin['password'])) {
 
             $_SESSION['adminID'] = $admin['adminID'];
             $_SESSION['adminName'] = $admin['adminName'];
 
-            header("Location: admin.php");
+            header("Location: adminDashboard.php");
             exit();
         }
     }
 
-    // FAIL
-    echo "<script>alert('بيانات تسجيل الدخول غير صحيحة');</script>";
+    echo "<script>alert('بيانات غير صحيحة');</script>";
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
