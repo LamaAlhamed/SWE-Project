@@ -16,10 +16,10 @@ if (isset($_POST['login'])) {
     if (mysqli_num_rows($result) == 1) {
         $user = mysqli_fetch_assoc($result);
 
-        if (password_verify($password, $user['password'])) {
+        if (password_verify($password, $student['password'])) {
 
-            $_SESSION['userID'] = $user['studentID'];
-            $_SESSION['username'] = $user['studentName'];
+            $_SESSION['userID'] = $student['studentID'];
+            $_SESSION['username'] = $student['studentName'];
 
             header("Location: profile.php");
             exit();
@@ -40,7 +40,7 @@ if (isset($_POST['login'])) {
             $_SESSION['adminID'] = $admin['adminID'];
             $_SESSION['adminName'] = $admin['adminName'];
 
-            header("Location: adminDashboard.php");
+            header("Location: admin.php");
             exit();
         }
     }
