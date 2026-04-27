@@ -2,7 +2,7 @@
 session_start();
 require_once 'AtharDB.php';
 
-// يجب أن تكون مسجلة دخول
+
 if (!isset($_SESSION['studentID'])) {
     header("Location: login.php");
     exit();
@@ -11,10 +11,10 @@ if (!isset($_SESSION['studentID'])) {
 $studentID = $_SESSION['studentID'];
 $studentName = $_SESSION['studentName'];
 
-// جلب courseID من URL
+
 $courseID = isset($_GET['courseID']) ? intval($_GET['courseID']) : 0;
 
-// جلب بيانات المقرر
+ 
 $courseInfo = null;
 if ($courseID > 0) {
     $stmt = mysqli_prepare($connection, "SELECT courseID, courseCode, courseName, level FROM course WHERE courseID = ?");
@@ -25,7 +25,7 @@ if ($courseID > 0) {
     mysqli_stmt_close($stmt);
 }
 
-// إذا المقرر مو موجود
+
 if (!$courseInfo) {
     header("Location: courses.php");
     exit();
@@ -34,19 +34,19 @@ if (!$courseInfo) {
 $errors = [];
 $success = false;
 
-// معالجة الفورم
+ 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $experienceContent = trim($_POST['experienceContent'] ?? '');
     $studyNote = '';
 
-    // التحقق من الوصف
+    
     if (empty($experienceContent)) {
         $errors[] = 'وصف التجربة مطلوب';
     } elseif (mb_strlen($experienceContent) < 20) {
         $errors[] = 'وصف التجربة يجب أن يكون 20 حرف على الأقل';
     }
 
-    // معالجة رفع الملف
+    
     if (isset($_FILES['studyNote']) && $_FILES['studyNote']['error'] === UPLOAD_ERR_OK) {
         $allowedTypes = ['application/pdf', 'application/msword',
                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // حفظ في قاعدة البيانات
+
     if (empty($errors)) {
         $stmt = mysqli_prepare($connection,
             "INSERT INTO experience (experienceContent, studyNote, studentID, courseID, likeCount, dislikeCount) 
@@ -221,7 +221,7 @@ footer strong { color: var(--salmon); }
 <footer><p>جميع الحقوق محفوظة &copy; 2026 — <strong>منصة أثر</strong></p></footer>
 
 <script>
-// عداد الأحرف
+
 const textarea = document.getElementById('expContent');
 const charCount = document.getElementById('charCount');
 if (textarea) {
@@ -230,8 +230,7 @@ if (textarea) {
         charCount.textContent = textarea.value.length;
     });
 }
-
-// اسم الملف المرفوع
+ 
 const fileInput = document.getElementById('file-input');
 const fileNameDiv = document.getElementById('fileName');
 if (fileInput) {
