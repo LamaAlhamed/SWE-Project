@@ -3,40 +3,43 @@ session_start();
 include("AtharDB.php");
 
 if (isset($_POST['register'])) {
-    
-    $username = trim($_POST['username']);
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
-    $confirm = $_POST['confirm'];
 
-    // check empty
+    $username = trim($_POST['username'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm = $_POST['confirm'] ?? '';
+
     if (empty($username) || empty($email) || empty($password) || empty($confirm)) {
         echo "<script>alert('يرجى تعبئة جميع الحقول');</script>";
     }
-    // check passwords match
     elseif ($password !== $confirm) {
         echo "<script>alert('كلمتا المرور غير متطابقتين');</script>";
     }
     else {
-        // check email exists
-        $check = $conn->prepare("SELECT * FROM student WHERE email=?");
-        $check->bind_param("s", $email);
-        $check->execute();
-        $result = $check->get_result();
 
-        if ($result->num_rows > 0) {
-            echo "<script>alert('البريد الإلكتروني مستخدم مسبقاً');</script>";
+        // check email in student table
+        $stmt = mysqli_prepare($connection, "SELECT * FROM student WHERE email=?");
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+
+        if (mysqli_num_rows($result) > 0) {
+            echo "<script>alert('البريد مستخدم مسبقاً');</script>";
         } else {
+
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-            $stmt = $conn->prepare("INSERT INTO students (studentName,email,password) VALUES (?,?,?)");
-            $stmt->bind_param("sss", $username, $email, $hashedPassword);
+            $stmt = mysqli_prepare($connection,
+                "INSERT INTO student (studentName, email, password) VALUES (?,?,?)"
+            );
+            mysqli_stmt_bind_param($stmt, "sss", $username, $email, $hashedPassword);
 
-            if ($stmt->execute()) {
-                $_SESSION['userID'] = $stmt->insert_id;
+            if (mysqli_stmt_execute($stmt)) {
+
+                $_SESSION['userID'] = mysqli_insert_id($connection);
                 $_SESSION['username'] = $username;
 
-                header("Location: userPage.php");
+                header("Location: profile.php");
                 exit();
             }
         }
