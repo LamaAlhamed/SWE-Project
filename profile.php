@@ -121,14 +121,14 @@ footer strong { color: var(--salmon); }
     <div class="profile-avatar">ر</div>
 <div>
   <div class="profile-name-row">
-    <div class="profile-name" id="profileName"><?php echo $studnet['studnetName']; ?></div>
+    <div class="profile-name" id="profileName"><?php echo $student['studenttName']; ?></div>
 
     <button class="icon-btn" id="editProfileBtn" onclick="toggleProfileEdit()" aria-label="تعديل البيانات" title="تعديل البيانات">
       <img id="editProfileIcon" src="images/edit.png" alt="تعديل">
     </button>
   </div>
 
-  <div class="profile-email" id="profileEmail"><?php echo $studnet['email']; ?></div>
+  <div class="profile-email" id="profileEmail"><?php echo $student['email']; ?></div>
 
   <div class="profile-stats">
     <div class="stat"><span class="stat-num">٣</span><div class="stat-label">تجاربي</div></div>
@@ -159,14 +159,13 @@ while ($post = mysqli_fetch_assoc($result)) {
 ?>
 
   <div class="experience-card">
-    <div class="exp-course"><?php echo $post['title']; ?></div>
+    <div class="exp-course"><?php echo $experience['courseID']; ?></div>
 
-    <div class="exp-text"><?php echo $post['content']; ?></div>
+    <div class="exp-text"><?php echo $experience['experienceContent']; ?></div>
 
     <div class="exp-footer">
-      <span class="exp-date"><?php echo $post['created_at']; ?></span>
-
-      <?php if ($post['user_id'] == $userID) { ?>
+      
+      <?php if ($experience['studentID'] == $userID) { ?>
         <div class="exp-actions">
           <a href="editPost.php?id=<?php echo $row['experienceID']; ?>" class="btn-edit">تعديل</a>
 
