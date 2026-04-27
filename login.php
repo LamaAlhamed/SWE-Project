@@ -1,0 +1,220 @@
+<?php
+session_start();
+include("AtharDB.php");
+
+$loginError = false;
+
+if (isset($_POST['login'])) {
+
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (empty($username) || empty($password)) {
+        $loginError = true;
+    } else {
+
+        // ===== TRY STUDENT =====
+        $stmt = mysqli_prepare($connection, "SELECT * FROM student WHERE studentName = ?");
+        mysqli_stmt_bind_param($stmt, "s", $username);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+
+        if (mysqli_num_rows($result) == 1) {
+            $student = mysqli_fetch_assoc($result);
+
+            if (password_verify($password, $student['password'])) {
+                $_SESSION['studentID']   = $student['studentID'];
+                $_SESSION['studentName'] = $student['studentName'];
+                $_SESSION['studentEmail']= $student['email'];
+
+                header("Location: profile.php");
+                exit();
+            }
+        }
+        mysqli_stmt_close($stmt);
+
+        // ===== TRY ADMIN =====
+        $stmt = mysqli_prepare($connection, "SELECT * FROM admin WHERE adminName = ?");
+        mysqli_stmt_bind_param($stmt, "s", $username);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+
+        if (mysqli_num_rows($result) == 1) {
+            $admin = mysqli_fetch_assoc($result);
+
+            if (password_verify($password, $admin['password'])) {
+                $_SESSION['adminID']   = $admin['adminID'];
+                $_SESSION['adminName'] = $admin['adminName'];
+
+                header("Location: Admin.php");
+                exit();
+            }
+        }
+        mysqli_stmt_close($stmt);
+
+        $loginError = true;
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>أثر - تسجيل الدخول</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --maroon: #5C1F3A; --maroon-light: #7C2D4F;
+  --salmon: #E8876A; --cream: #FFF5F0;
+  --text-dark: #2A0F1A; --text-mid: #6B3A4A;
+}
+body {
+  font-family: 'Tajawal', sans-serif;
+  background: linear-gradient(160deg, #E8876A 0%, #C96070 40%, #7C2D4F 70%, #3A0F25 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+nav {
+  background: var(--maroon);
+  padding: 16px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.logo img { width: 44px; height: 44px; object-fit: contain; border-radius: 8px; }
+.logo-text { font-size: 15px; font-weight: 600; color: white; }
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.card {
+  background: white;
+  border-radius: 24px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.card-header { text-align: center; margin-bottom: 36px; }
+.card-header h1 { font-size: 28px; font-weight: 800; color: var(--maroon); margin-bottom: 8px; }
+.card-header p { font-size: 14px; color: var(--text-mid); }
+.form-group { margin-bottom: 20px; }
+label { display: block; font-size: 14px; font-weight: 600; color: var(--text-dark); margin-bottom: 8px; }
+input[type="text"], input[type="password"] {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #E8D6DC;
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: 'Tajawal', sans-serif;
+  color: var(--text-dark);
+  background: #FFF5F0;
+  transition: border .2s;
+  outline: none;
+}
+input[type="text"]:focus, input[type="password"]:focus {
+  border-color: var(--maroon);
+  background: white;
+}
+.alert-error {
+  background: #FDE8E8;
+  color: #C0392B;
+  border: 1px solid #F5BCBC;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.btn-main {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--maroon), var(--maroon-light));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Tajawal', sans-serif;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: transform .2s, box-shadow .2s;
+}
+.btn-main:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(92,31,58,0.3); }
+.divider {
+  text-align: center;
+  margin: 24px 0;
+  color: var(--text-mid);
+  font-size: 13px;
+  position: relative;
+}
+.divider::before, .divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #E8D6DC;
+}
+.divider::before { right: 0; }
+.divider::after { left: 0; }
+.link-text { text-align: center; font-size: 14px; color: var(--text-mid); }
+.link-text a { color: var(--maroon); font-weight: 700; text-decoration: none; }
+.link-text a:hover { text-decoration: underline; }
+footer {
+  background: #2A0F1A;
+  padding: 20px;
+  text-align: center;
+  color: rgba(255,255,255,0.4);
+  font-size: 12px;
+}
+footer strong { color: var(--salmon); }
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.php" class="logo">
+    <img src="images/logo.PNG" alt="أثر">
+    <p class="logo-text">أترك أثرك..وساعد غيرك</p>
+  </a>
+</nav>
+
+<div class="main">
+  <div class="card">
+    <div class="card-header">
+      <h1>تسجيل الدخول</h1>
+      <p>أهلاً بعودتك! سجّل دخولك للمتابعة</p>
+    </div>
+
+    <?php if ($loginError): ?>
+      <div class="alert-error">❌ اسم المستخدم أو كلمة المرور غير صحيحة</div>
+    <?php endif; ?>
+
+    <form method="POST">
+      <div class="form-group">
+        <label>اسم المستخدم</label>
+        <input type="text" name="username" placeholder="أدخل اسم المستخدم"
+               value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input type="password" name="password" placeholder="أدخل كلمة المرور">
+      </div>
+      <button type="submit" class="btn-main" name="login">تسجيل الدخول</button>
+    </form>
+
+    <div class="divider">أو</div>
+    <div class="link-text">ليس لديك حساب؟ <a href="register.php">إنشاء حساب جديد</a></div>
+  </div>
+</div>
+
+<footer><p>جميع الحقوق محفوظة &copy; 2026 — <strong>منصة أثر</strong></p></footer>
+</body>
+</html>
