@@ -106,7 +106,7 @@ footer strong { color: var(--salmon); }
       <input type="password" name="password" placeholder="أدخل كلمة المرور">
     </div>
         
-    <button class="btn-main" name="login">تسجيل الدخول</button>
+    <button type="submit" class="btn-main" name="login">تسجيل الدخول</button>
     
     </form>
         
