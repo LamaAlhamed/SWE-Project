@@ -18,8 +18,8 @@ if (isset($_POST['login'])) {
 
         if (password_verify($password, $student['password'])) {
 
-            $_SESSION['userID'] = $student['studentID'];
-            $_SESSION['username'] = $student['studentName'];
+            $_SESSION['studentID'] = $student['studentID'];
+            $_SESSION['studentName'] = $student['studentName'];
 
             header("Location: profile.php");
             exit();
