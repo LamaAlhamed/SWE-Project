@@ -1,3 +1,37 @@
+<?php
+include 'AtharDB.php';
+
+if (!isset($_GET['id']) || empty($_GET['id'])) {
+    die("المقرر غير موجود.");
+}
+
+$courseID = (int) $_GET['id'];
+
+$courseQuery = "SELECT * FROM course WHERE courseID = $courseID";
+$courseResult = mysqli_query($connection, $courseQuery);
+
+if (!$courseResult || mysqli_num_rows($courseResult) == 0) {
+    die("لم يتم العثور على المقرر.");
+}
+
+$course = mysqli_fetch_assoc($courseResult);
+
+$resourcesQuery = "SELECT * FROM resource WHERE courseID = $courseID ORDER BY resourceID DESC";
+$resourcesResult = mysqli_query($connection, $resourcesQuery);
+
+$experiencesQuery = "
+    SELECT e.*, s.studentName
+    FROM experience e
+    INNER JOIN student s ON e.studentID = s.studentID
+    WHERE e.courseID = $courseID
+    ORDER BY e.experienceID DESC
+";
+$experiencesResult = mysqli_query($connection, $experiencesQuery);
+
+function getAvatarLetter($name) {
+    return mb_substr(trim($name), 0, 1, "UTF-8");
+}
+?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -32,6 +66,7 @@ nav { background: var(--maroon); padding: 16px 48px; display: flex; align-items:
 .refs-list { list-style: none; }
 .refs-list li { padding: 10px 0; border-bottom: 1px solid var(--cream); font-size: 14px; color: var(--text-mid); display: flex; align-items: center; gap: 10px; }
 .refs-list li:last-child { border-bottom: none; }
+.refs-list a { color: inherit; text-decoration: none; }
 .ref-icon { width: 32px; height: 32px; background: var(--cream); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 
 .exp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
@@ -45,37 +80,47 @@ nav { background: var(--maroon); padding: 16px 48px; display: flex; align-items:
 .exp-name { font-size: 14px; font-weight: 700; color: var(--text-dark); }
 .exp-date { font-size: 12px; color: var(--text-mid); }
 .exp-text { font-size: 14px; color: var(--text-mid); line-height: 1.7; margin-bottom: 14px; }
-.exp-actions { display: flex; align-items: center; gap: 12px; }
-.btn-like { background: white; border: 1.5px solid #E8D6DC; color: var(--text-mid); padding: 6px 14px; border-radius: 8px; font-size: 13px; font-family: 'Tajawal', sans-serif; cursor: pointer; transition: all .2s; }
-.btn-like:hover { border-color: var(--maroon); color: var(--maroon); }
-.btn-edit, .btn-delete { background: none; border: none; font-size: 13px; font-family: 'Tajawal', sans-serif; cursor: pointer; padding: 6px 12px; border-radius: 8px; }
-.btn-edit { color: var(--maroon); background: rgba(92,31,58,0.08); }
-.btn-delete { color: #C0392B; background: rgba(192,57,43,0.08); }
-
+.exp-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.btn-like { background: white; border: 1.5px solid #E8D6DC; color: var(--text-mid); padding: 6px 14px; border-radius: 8px; font-size: 13px; font-family: 'Tajawal', sans-serif; }
+.study-note-link {
+  display: inline-block;
+  color: var(--maroon);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  margin-top: 8px;
+}
+.empty-message {
+  color: var(--text-mid);
+  font-size: 14px;
+}
 footer { background: #2A0F1A; padding: 24px 48px; text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 20px; }
 footer strong { color: var(--salmon); }
 </style>
 </head>
 <body>
 <nav>
-  <a href="index.html" class="logo">
+  <a href="index.php" class="logo">
     <img src="images/logo.PNG" alt="أثر">
-        <p class="logo-text">أترك أثرك..وساعد غيرك</p>
+    <p class="logo-text">أترك أثرك..وساعد غيرك</p>
   </a>
   <div class="nav-links">
-    <a href="index.html" class="nav-link">الرئيسية</a>
-    <a href="profile.html" class="btn-profile">حسابي</a>
+    <a href="index.php" class="nav-link">الرئيسية</a>
+    <a href="profile.php" class="btn-profile">حسابي</a>
   </div>
 </nav>
 
 <div class="page-header">
-  <div class="breadcrumb"><a href="index.html">الرئيسية</a> ← <a href="courses.html">المستوى الثالث</a> ← <span>IT 210</span></div>
-  <div class="course-code-badge">IT 222</div>
-  <h1>مبادئ قواعد البيانات</h1>
+  <div class="breadcrumb">
+    <a href="index.php">الرئيسية</a> ←
+    <a href="courses.php?level=<?php echo $course['level']; ?>">المستوى <?php echo $course['level']; ?></a> ←
+    <span><?php echo htmlspecialchars($course['courseCode']); ?></span>
+  </div>
+  <div class="course-code-badge"><?php echo htmlspecialchars($course['courseCode']); ?></div>
+  <h1><?php echo htmlspecialchars($course['courseName']); ?></h1>
   <div class="course-tags">
-    <span class="tag">المستوى الثالث</span>
-    <span class="tag">٣ ساعات</span>
-    <span class="tag">إلزامي</span>
+    <span class="tag">المستوى <?php echo htmlspecialchars($course['level']); ?></span>
+    <span class="tag"><?php echo htmlspecialchars($course['track']); ?></span>
   </div>
 </div>
 
@@ -83,58 +128,66 @@ footer strong { color: var(--salmon); }
 
   <div class="section">
     <div class="section-title">وصف المقرر</div>
-    <p>يتناول هذا المقرر المفاهيم الأساسية لقواعد البيانات العلائقية، بما في ذلك تصميم قواعد البيانات باستخدام مخططات ER، وتطبيق لغة SQL للاستعلام وإدارة البيانات، وتطبيق مفاهيم التطبيع.</p>
+    <p><?php echo nl2br(htmlspecialchars($course['courseDescription'])); ?></p>
   </div>
 
   <div class="section">
     <div class="section-title">المراجع والمصادر</div>
     <ul class="refs-list">
-      <li><div class="ref-icon">📘</div> Database System Concepts — Silberschatz, Korth</li>
-      <li><div class="ref-icon">📗</div> Fundamentals of Database Systems — Elmasri & Navathe</li>
-      <li><div class="ref-icon">🔗</div> W3Schools SQL Tutorial</li>
+      <?php if ($resourcesResult && mysqli_num_rows($resourcesResult) > 0): ?>
+        <?php while ($resource = mysqli_fetch_assoc($resourcesResult)): ?>
+          <li>
+            <div class="ref-icon">🔗</div>
+            <a href="<?php echo htmlspecialchars($resource['resourceLink']); ?>" target="_blank">
+              <?php echo htmlspecialchars($resource['resourceTitle']); ?>
+            </a>
+          </li>
+        <?php endwhile; ?>
+      <?php else: ?>
+        <li>لا توجد مصادر مضافة لهذا المقرر حالياً.</li>
+      <?php endif; ?>
     </ul>
   </div>
 
   <div class="section">
     <div class="exp-header">
       <h2>تجارب الطلاب</h2>
-      <a href="add-experience.html" class="btn-add-exp">+ إضافة تجربة</a>
+      <a href="add-experience.php?course_id=<?php echo $course['courseID']; ?>" class="btn-add-exp">+ إضافة تجربة</a>
     </div>
 
-    <div class="experience-card">
-      <div class="exp-user">
-        <div class="exp-avatar">ر</div>
-        <div>
-          <div class="exp-name">ريم العتيبي</div>
-          <div class="exp-date">مارس ٢٠٢٦</div>
+    <?php if ($experiencesResult && mysqli_num_rows($experiencesResult) > 0): ?>
+      <?php while ($exp = mysqli_fetch_assoc($experiencesResult)): ?>
+        <div class="experience-card">
+          <div class="exp-user">
+            <div class="exp-avatar"><?php echo htmlspecialchars(getAvatarLetter($exp['studentName'])); ?></div>
+            <div>
+              <div class="exp-name"><?php echo htmlspecialchars($exp['studentName']); ?></div>
+              <div class="exp-date">تجربة طالب/ـة</div>
+            </div>
+          </div>
+
+          <div class="exp-text">
+            <?php echo nl2br(htmlspecialchars($exp['experienceContent'])); ?>
+          </div>
+
+          <?php if (!empty($exp['studyNote'])): ?>
+            <a class="study-note-link" href="uploads/<?php echo htmlspecialchars($exp['studyNote']); ?>" target="_blank">
+              📎 عرض المذكرة المرفقة
+            </a>
+          <?php endif; ?>
+
+          <div class="exp-actions">
+            <span class="btn-like">👍 مفيدة (<?php echo (int)$exp['likeCount']; ?>)</span>
+            <span class="btn-like">👎 غير مفيدة (<?php echo (int)$exp['dislikeCount']; ?>)</span>
+          </div>
         </div>
-      </div>
-      <div class="exp-text">المقرر ممتع جداً ومفيد، لكنه يحتاج تركيز في موضوع التطبيع. الأستاذة شارحة بشكل واضح والمشاريع العملية تساعد كثيراً في الفهم. أنصح بمراجعة W3Schools بشكل منتظم.</div>
-      <div class="exp-actions">
-        <button class="btn-like">👍 مفيدة (٨)</button>
-        <button class="btn-edit">تعديل</button>
-        <button class="btn-delete">حذف</button>
-      </div>
-    </div>
-
-    <div class="experience-card">
-      <div class="exp-user">
-        <div class="exp-avatar">س</div>
-        <div>
-          <div class="exp-name">سارة الحربي</div>
-          <div class="exp-date">فبراير ٢٠٢٦</div>
-        </div>
-      </div>
-      <div class="exp-text">الامتحان يركز على SQL والتصميم. المشروع النهائي يأخذ وقتاً لكنه يستحق. ابدأي بالمراجع المطلوبة من البداية ولا تأجلي.</div>
-      <div class="exp-actions">
-        <button class="btn-like">👍 مفيدة (٥)</button>
-      </div>
-    </div>
-
+      <?php endwhile; ?>
+    <?php else: ?>
+      <p class="empty-message">لا توجد تجارب مضافة لهذا المقرر حالياً.</p>
+    <?php endif; ?>
   </div>
 </div>
 
 <footer><p>جميع الحقوق محفوظة &copy; 2026 — <strong>منصة أثر</strong> | جامعة الملك سعود</p></footer>
-<script src="athar-ui.js"></script>
 </body>
 </html>
