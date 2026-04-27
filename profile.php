@@ -3,14 +3,14 @@
     
     include("AtharDB.php");
     
-    if (!isset($_SESSION['userID'])) {
+    if (!isset($_SESSION['studentID'])) {
         header("Location: login.php");
         exit();
     }
-    $userID = $_SESSION['userID'];
+    $userID = $_SESSION['studentID'];
 
 // get user info
-$stmt = $conn->prepare("SELECT username, email FROM users WHERE id=?");
+$stmt = $conn->prepare("SELECT studentName, email FROM student WHERE studentID=?");
 $stmt->bind_param("i", $userID);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
@@ -121,14 +121,14 @@ footer strong { color: var(--salmon); }
     <div class="profile-avatar">ر</div>
 <div>
   <div class="profile-name-row">
-    <div class="profile-name" id="profileName"><?php echo $user['username']; ?></div>
+    <div class="profile-name" id="profileName"><?php echo $studnet['studnetName']; ?></div>
 
     <button class="icon-btn" id="editProfileBtn" onclick="toggleProfileEdit()" aria-label="تعديل البيانات" title="تعديل البيانات">
       <img id="editProfileIcon" src="images/edit.png" alt="تعديل">
     </button>
   </div>
 
-  <div class="profile-email" id="profileEmail"><?php echo $user['email']; ?></div>
+  <div class="profile-email" id="profileEmail"><?php echo $studnet['email']; ?></div>
 
   <div class="profile-stats">
     <div class="stat"><span class="stat-num">٣</span><div class="stat-label">تجاربي</div></div>
