@@ -2,22 +2,22 @@
 session_start();
 include("AtharDB.php");
 
-if (!isset($_SESSION['userID'])) {
+if (!isset($_SESSION['studentID'])) {
     header("Location: login.php");
     exit();
 }
 
-$userID = $_SESSION['userID'];
+$userID = $_SESSION['studentID'];
 
 // load post
 if (isset($_GET['id'])) {
 
-    $postID = $_GET['id'];
+    $experienceID = $_GET['id'];
 
     $stmt = mysqli_prepare($connection,
         "SELECT * FROM experience WHERE experienceID=? AND studentID=?"
     );
-    mysqli_stmt_bind_param($stmt, "ii", $postID, $userID);
+    mysqli_stmt_bind_param($stmt, "ii", $experienceID, $studentID);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     $post = mysqli_fetch_assoc($result);
