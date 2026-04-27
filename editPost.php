@@ -9,34 +9,32 @@ if (!isset($_SESSION['userID'])) {
 
 $userID = $_SESSION['userID'];
 
-// GET post
+// load post
 if (isset($_GET['id'])) {
 
     $postID = $_GET['id'];
 
-    //only get user's post
-    $stmt = $conn->prepare("SELECT * FROM experience WHERE experienceID=? AND studentID=?");
-    $stmt->bind_param("ii", $postID, $userID);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $post = $result->fetch_assoc();
+    $stmt = mysqli_prepare($connection,
+        "SELECT * FROM experience WHERE experienceID=? AND studentID=?"
+    );
+    mysqli_stmt_bind_param($stmt, "ii", $postID, $userID);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $post = mysqli_fetch_assoc($result);
 }
 
-// UPDATE post
+// update
 if (isset($_POST['update'])) {
 
     $content = $_POST['content'];
 
-    $stmt = $conn->prepare("UPDATE experience SET experienceContent=? WHERE experienceID=? AND studentID=?");
-    $stmt->bind_param("sii", $content, $postID, $userID);
+    $stmt = mysqli_prepare($connection,
+        "UPDATE experience SET experienceContent=? WHERE experienceID=? AND studentID=?"
+    );
+    mysqli_stmt_bind_param($stmt, "sii", $content, $postID, $userID);
+    mysqli_stmt_execute($stmt);
 
-    if ($stmt->execute()) {
-        header("Location: profile.php");
-        exit();
-    }
+    header("Location: profile.php");
+    exit();
 }
 ?>
-    <form method="POST">
-        <textarea name="content"><?php echo $post['experienceContent']; ?></textarea>
-        <button type="submit" name="update">Update</button>
-    </form>
