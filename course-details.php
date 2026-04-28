@@ -94,6 +94,20 @@ $course = mysqli_fetch_assoc($courseResult);
 $resourcesQuery = "SELECT * FROM resource WHERE courseID = $courseID ORDER BY resourceID DESC";
 $resourcesResult = mysqli_query($connection, $resourcesQuery);
 
+
+$prereqQuery = "
+    SELECT c.courseID, c.courseCode, c.courseName
+    FROM courseprerequisite cp
+    JOIN course c ON cp.prerequisiteCourseID = c.courseID
+    WHERE cp.courseID = $courseID
+    ORDER BY c.level, c.courseCode
+";
+$prereqResult = mysqli_query($connection, $prereqQuery);
+$prereqs = [];
+if ($prereqResult) {
+    while ($pr = mysqli_fetch_assoc($prereqResult)) $prereqs[] = $pr;
+}
+
 $loggedStudentID = isset($_SESSION['studentID']) ? (int)$_SESSION['studentID'] : 0;
 
 $experiencesQuery = "
@@ -137,6 +151,18 @@ nav { background: var(--maroon); padding: 16px 48px; display: flex; align-items:
 .page-header h1 { font-size: 32px; font-weight: 800; margin-bottom: 12px; }
 .course-tags { display: flex; gap: 10px; flex-wrap: wrap; }
 .tag { background: rgba(255,255,255,0.12); padding: 5px 14px; border-radius: 50px; font-size: 12px; }
+.prereq-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  padding: 5px 14px; border-radius: 50px;
+  font-size: 12px; font-weight: 700;
+  color: var(--salmon); text-decoration: none; transition: background .2s;
+}
+.prereq-badge:hover { background: rgba(255,255,255,0.18); }
+.prereq-none {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 14px; font-size: 12px; color: rgba(255,255,255,0.45);
+}
 
 .content { max-width: 1000px; margin: 0 auto; padding: 48px; }
 .section { background: white; border-radius: 16px; padding: 28px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(92,31,58,0.06); }
@@ -204,6 +230,19 @@ footer strong { color: var(--salmon); }
     <span class="tag">المستوى <?php echo htmlspecialchars($course['level']); ?></span>
     <span class="tag"><?php echo htmlspecialchars($course['track']); ?></span>
   </div>
+
+  <?php if (!empty($prereqs)): ?>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center;">
+      <span style="font-size:13px;color:rgba(255,255,255,0.6);">🔗 متطلب سابق:</span>
+      <?php foreach ($prereqs as $pr): ?>
+        <a href="course-details.php?id=<?= $pr['courseID'] ?>" class="prereq-badge">
+          <?= htmlspecialchars($pr['courseCode']) ?> — <?= htmlspecialchars($pr['courseName']) ?>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  <?php else: ?>
+    <div class="prereq-none">✅ لا يوجد متطلب سابق لهذا المقرر</div>
+  <?php endif; ?>
 </div>
 
 <div class="content">
