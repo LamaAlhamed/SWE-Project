@@ -67,8 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         mysqli_stmt_close($dupStmt);
     }
-    if (!$resTitle)   $errors[] = 'عنوان المصدر التعليمي مطلوب';
-
+if (!$isEdit && !$resTitle) {
+    $errors[] = 'عنوان المصدر التعليمي مطلوب';
+}
     // التحقق من الـ resource — إجباري عند الإضافة فقط
     $hasFile = !empty($_FILES['file']['name']);
     $hasLink = !empty($resLink);
