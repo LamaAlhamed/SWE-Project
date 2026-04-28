@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($experience['studyNote']) && file_exists('uploads/' . $experience['studyNote'])) {
                     unlink('uploads/' . $experience['studyNote']);
                 }
-                // نحفظ study_notes/filename فقط
+
                 $studyNote = 'study_notes/' . $fileName;
             } else {
                 $errors[] = 'فشل رفع الملف، حاولي مرة أخرى';
