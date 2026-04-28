@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uploadPath = $uploadDir . $fileName;
 
             if (move_uploaded_file($_FILES['studyNote']['tmp_name'], $uploadPath)) {
-                $studyNote = $fileName;
+                $studyNote = 'study_notes/' . $fileName;
             } else {
                 $errors[] = 'فشل رفع الملف، حاولي مرة أخرى';
             }
