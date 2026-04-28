@@ -91,11 +91,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            header('Location: Admin.php?edited=1');
-            exit;
+
+            $_SESSION['newCourseID']   = $courseID;
+            $_SESSION['newCourseName'] = $courseName;
+            $_SESSION['isEdit']        = true;
+            $showPrereqModal = true;
 
         } else {
-            // Insert new course
+
             $stmt = mysqli_prepare($connection,
                "INSERT INTO course (courseCode, courseName, courseDescription, level, track) VALUES (?,?,?,?,?)");
             mysqli_stmt_bind_param($stmt, 'sssis', $courseCode, $courseName, $desc, $level, $track);
@@ -103,7 +106,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newCourseID = mysqli_insert_id($connection);
             mysqli_stmt_close($stmt);
 
-            // Insert resource if file uploaded
             if ($uploadedFile && $newCourseID) {
                 $rTitle = $courseName . ' — ملف';
                 $stmt2 = mysqli_prepare($connection,
@@ -113,10 +115,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_close($stmt2);
             }
 
-            header('Location: Admin.php?added=1');
-            exit;
+
+            $_SESSION['newCourseID']   = $newCourseID;
+            $_SESSION['newCourseName'] = $courseName;
+            $showPrereqModal = true;
         }
     }
+}
+
+$allCourses = [];
+$allCoursesRes = mysqli_query($connection, "SELECT courseID, courseCode, courseName FROM course ORDER BY level, courseCode");
+while ($row = mysqli_fetch_assoc($allCoursesRes)) {
+    $allCourses[] = $row;
+}
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_prereq'])) {
+    $targetID = (int)($_SESSION['newCourseID'] ?? 0);
+    $prereqID = (int)($_POST['prereqID'] ?? 0);
+    $wasEdit  = $_SESSION['isEdit'] ?? false;
+    $prereqIDs = $_POST['prereqID'] ?? [];
+    if ($targetID > 0 && !empty($prereqIDs)) {
+
+        $stmtDel = mysqli_prepare($connection, "DELETE FROM courseprerequisite WHERE courseID = ?");
+        mysqli_stmt_bind_param($stmtDel, 'i', $targetID);
+        mysqli_stmt_execute($stmtDel);
+        mysqli_stmt_close($stmtDel);
+        
+        $stmtIns = mysqli_prepare($connection,
+            "INSERT INTO courseprerequisite (courseID, prerequisiteCourseID) VALUES (?, ?)");
+        foreach ($prereqIDs as $pid) {
+            $pid = (int)$pid;
+            if ($pid > 0 && $pid !== $targetID) {
+                mysqli_stmt_bind_param($stmtIns, 'ii', $targetID, $pid);
+                mysqli_stmt_execute($stmtIns);
+            }
+        }
+        mysqli_stmt_close($stmtIns);
+    }
+    unset($_SESSION['newCourseID'], $_SESSION['newCourseName'], $_SESSION['isEdit']);
+    header('Location: Admin.php?' . ($wasEdit ? 'edited=1' : 'added=1'));
+    exit;
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['skip_prereq'])) {
+    $wasEdit = $_SESSION['isEdit'] ?? false;
+    unset($_SESSION['newCourseID'], $_SESSION['newCourseName'], $_SESSION['isEdit']);
+    header('Location: Admin.php?' . ($wasEdit ? 'edited=1' : 'added=1'));
+    exit;
 }
 
 
@@ -246,6 +291,39 @@ footer {
   color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 60px;
 }
 footer strong { color: var(--salmon); }
+
+/* Modal المتطلب السابق */
+.prereq-overlay {
+  position: fixed; inset: 0; background: rgba(42,15,26,0.65);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; backdrop-filter: blur(4px);
+}
+.prereq-box {
+  background: white; border-radius: 20px; padding: 36px 32px;
+  max-width: 440px; width: 92%; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.prereq-box .prereq-icon { font-size: 40px; margin-bottom: 14px; }
+.prereq-box .prereq-title { font-size: 17px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; }
+.prereq-box .prereq-sub { font-size: 13px; color: var(--text-mid); margin-bottom: 22px; }
+.prereq-select {
+  width: 100%; padding: 8px 12px; border: 1.5px solid #E8D6DC;
+  border-radius: 12px; background: #FFF9F7;
+  margin-bottom: 20px; display: none;
+}
+.prereq-select.show { display: block; }
+.prereq-btns { display: flex; gap: 10px; }
+.prereq-btns .btn-yes {
+  flex: 1; padding: 12px;
+  background: linear-gradient(135deg, var(--maroon), var(--maroon-light));
+  color: white; border: none; border-radius: 12px;
+  font-size: 15px; font-weight: 700; font-family: 'Tajawal', sans-serif; cursor: pointer;
+}
+.prereq-btns .btn-no {
+  flex: 1; padding: 12px; background: #F5EEF0; color: var(--text-mid);
+  border: none; border-radius: 12px; font-size: 15px;
+  font-weight: 600; font-family: 'Tajawal', sans-serif; cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -356,5 +434,86 @@ document.getElementById('file-input').addEventListener('change', function() {
   }
 });
 </script>
+
+<?php if (!empty($showPrereqModal)): ?>
+
+<div class="prereq-overlay" id="prereqOverlay">
+  <div class="prereq-box">
+    <div class="prereq-icon">📚</div>
+    <div class="prereq-title">هل لهذا المقرر متطلب سابق؟</div>
+    <div style="font-size:12px;color:var(--text-mid);margin-bottom:4px;">يمكنك اختيار أكثر من متطلب</div>
+    <div class="prereq-sub">«<?= htmlspecialchars($_SESSION['newCourseName']) ?>»</div>
+    <?php
+
+      $existingPrereq = null;
+      if (!empty($_SESSION['newCourseID'])) {
+          $epRes = mysqli_query($connection,
+              "SELECT c.courseCode, c.courseName FROM courseprerequisite cp
+               JOIN course c ON cp.prerequisiteCourseID = c.courseID
+               WHERE cp.courseID = " . (int)$_SESSION['newCourseID'] . " LIMIT 1");
+          $existingPrereq = $epRes ? mysqli_fetch_assoc($epRes) : null;
+      }
+    ?>
+    <?php if ($existingPrereq): ?>
+      <div style="background:#FFF5F0;border:1px solid #E8D6DC;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--text-mid);">
+        المتطلب الحالي: <strong style="color:var(--maroon);"><?= htmlspecialchars($existingPrereq['courseCode'] . ' — ' . $existingPrereq['courseName']) ?></strong>
+      </div>
+    <?php endif; ?>
+
+    
+    <form method="POST" id="prereqForm">
+      <div class="prereq-select" id="prereqSelect" style="text-align:right;max-height:200px;overflow-y:auto;">
+        <?php
+
+          $currentPrereqs = [];
+          if (!empty($_SESSION['newCourseID'])) {
+              $cpRes = mysqli_query($connection,
+                  "SELECT prerequisiteCourseID FROM courseprerequisite WHERE courseID=" . (int)$_SESSION['newCourseID']);
+              while ($cpRow = mysqli_fetch_assoc($cpRes))
+                  $currentPrereqs[] = $cpRow['prerequisiteCourseID'];
+          }
+        ?>
+        <?php foreach ($allCourses as $c): ?>
+          <?php if ($c['courseID'] != $_SESSION['newCourseID']): ?>
+          <label style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #F0E4E8;cursor:pointer;font-size:13px;">
+            <input type="checkbox" name="prereqID[]" value="<?= $c['courseID'] ?>"
+              <?= in_array($c['courseID'], $currentPrereqs) ? 'checked' : '' ?>
+              style="accent-color:var(--maroon);width:16px;height:16px;flex-shrink:0;">
+            <?= htmlspecialchars($c['courseCode'] . ' — ' . $c['courseName']) ?>
+          </label>
+          <?php endif; ?>
+        <?php endforeach; ?>
+      </div>
+
+      <div class="prereq-btns" id="prereqBtnsInitial">
+        <button type="button" class="btn-yes" onclick="showCourseList()">نعم</button>
+        <button type="button" class="btn-no" onclick="skipPrereq()">لا، ليس له متطلب</button>
+      </div>
+
+
+      <div class="prereq-btns" id="prereqBtnsConfirm" style="display:none;">
+        <button type="submit" name="save_prereq" class="btn-yes">حفظ المتطلب ✓</button>
+        <button type="button" class="btn-no" onclick="skipPrereq()">تخطي</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<form method="POST" id="skipForm" style="display:none;">
+  <input type="hidden" name="skip_prereq" value="1">
+</form>
+
+<script>
+function showCourseList() {
+  document.getElementById('prereqSelect').classList.add('show');
+  document.getElementById('prereqBtnsInitial').style.display = 'none';
+  document.getElementById('prereqBtnsConfirm').style.display = 'flex';
+}
+function skipPrereq() {
+  document.getElementById('skipForm').submit();
+}
+</script>
+<?php endif; ?>
+
 </body>
 </html>
