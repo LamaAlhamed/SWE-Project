@@ -26,7 +26,7 @@ if ($isEdit) {
         exit;
     }
 
-    // جلب الـ resource الحالي للمقرر
+
     $rRes = mysqli_query($connection,
         "SELECT * FROM resource WHERE courseID = $courseID LIMIT 1");
     $existingResource = $rRes ? mysqli_fetch_assoc($rRes) : null;
@@ -43,25 +43,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $resTitle   = trim($_POST['resourceTitle'] ?? '');
     $resLink    = trim($_POST['resourceLink'] ?? '');
 
-    // التحقق من الحقول الأساسية
+    
     if (!$courseName) $errors[] = 'اسم المقرر مطلوب';
     if (!$desc)       $errors[] = 'وصف المقرر مطلوب';
     if (!$level)      $errors[] = 'المستوى الدراسي مطلوب';
     if (!$track)      $errors[] = 'المسار مطلوب';
     if (!$resTitle)   $errors[] = 'عنوان المصدر التعليمي مطلوب';
 
-    // التحقق من الـ resource — إجباري عند الإضافة فقط
     $hasFile = !empty($_FILES['file']['name']);
     $hasLink = !empty($resLink);
 
     if (!$isEdit) {
-        // عند الإضافة: لازم إما ملف أو رابط
+
         if (!$hasFile && !$hasLink) {
             $errors[] = 'المصدر التعليمي مطلوب — أضيفي رابطاً أو ارفعي ملفاً';
         }
     }
 
-    // معالجة رفع الملف
+
     $uploadedFile = $existingResource['resourceLink'] ?? '';
     if ($hasFile) {
         $allowed = ['pdf','doc','docx','ppt','pptx'];
@@ -85,14 +84,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         if ($isEdit) {
-            // تحديث المقرر
+
             $stmt = mysqli_prepare($connection,
                 "UPDATE course SET courseCode=?, courseName=?, courseDescription=?, level=?, track=? WHERE courseID=?");
             mysqli_stmt_bind_param($stmt, 'sssisi', $courseCode, $courseName, $desc, $level, $track, $courseID);
             mysqli_stmt_execute($stmt);
             mysqli_stmt_close($stmt);
 
-            // تحديث أو إضافة الـ resource إذا تغير
+
             if ($hasFile || $hasLink) {
                 $rCheck = mysqli_query($connection,
                     "SELECT resourceID FROM resource WHERE courseID = $courseID LIMIT 1");
@@ -118,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $showPrereqModal = true;
 
         } else {
-            // إضافة مقرر جديد
+          
             $stmt = mysqli_prepare($connection,
                 "INSERT INTO course (courseCode, courseName, courseDescription, level, track) VALUES (?,?,?,?,?)");
             mysqli_stmt_bind_param($stmt, 'sssis', $courseCode, $courseName, $desc, $level, $track);
@@ -126,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newCourseID = mysqli_insert_id($connection);
             mysqli_stmt_close($stmt);
 
-            // إضافة الـ resource (إجباري)
+
             if ($newCourseID && $uploadedFile) {
                 $stmt2 = mysqli_prepare($connection,
                     "INSERT INTO resource (resourceTitle, resourceLink, courseID) VALUES (?,?,?)");
@@ -142,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// جلب كل المقررات للمتطلبات السابقة
+
 $allCourses    = [];
 $allCoursesRes = mysqli_query($connection,
     "SELECT courseID, courseCode, courseName FROM course ORDER BY level, courseCode");
@@ -150,7 +149,7 @@ while ($row = mysqli_fetch_assoc($allCoursesRes)) {
     $allCourses[] = $row;
 }
 
-// معالجة حفظ المتطلب السابق
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_prereq'])) {
     $targetID  = (int)($_SESSION['newCourseID'] ?? 0);
     $prereqIDs = $_POST['prereqID'] ?? [];
@@ -186,7 +185,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['skip_prereq'])) {
     exit;
 }
 
-// القيم للفورم
 $val = [
     'courseName'        => $_POST['courseName']        ?? ($course['courseName']        ?? ''),
     'courseCode'        => $_POST['courseCode']        ?? ($course['courseCode']        ?? ''),
@@ -355,7 +353,7 @@ footer strong { color: var(--salmon); }
         <textarea name="courseDescription" placeholder="أدخل وصفاً تفصيلياً للمقرر..." required><?= htmlspecialchars($val['courseDescription']) ?></textarea>
       </div>
 
-      <!-- ===== قسم المصدر التعليمي ===== -->
+
       <div class="resource-section">
         <div class="resource-section-title">
           📚 المصدر التعليمي
@@ -379,20 +377,20 @@ footer strong { color: var(--salmon); }
                  value="<?= htmlspecialchars($val['resourceTitle']) ?>">
         </div>
 
-        <!-- تبويبات رابط / ملف -->
+
         <div class="resource-tabs">
           <button type="button" class="res-tab active" onclick="switchResTab('link', this)">🔗 رابط إلكتروني</button>
           <button type="button" class="res-tab" onclick="switchResTab('file', this)">📎 رفع ملف</button>
         </div>
 
-        <!-- تبويب الرابط -->
+
         <div class="res-panel active" id="panel-link">
           <input type="url" name="resourceLink"
                  placeholder="https://..."
                  value="<?= htmlspecialchars($val['resourceLink']) ?>">
         </div>
 
-        <!-- تبويب الملف -->
+
         <div class="res-panel" id="panel-file">
           <label class="file-upload" for="res-file-input">
             <div class="file-upload-icon">📎</div>
@@ -403,7 +401,7 @@ footer strong { color: var(--salmon); }
           <div class="file-name" id="resFileName"></div>
         </div>
       </div>
-      <!-- ===== نهاية قسم المصدر ===== -->
+
 
       <div class="btn-group">
         <button type="submit" class="btn-submit">
@@ -419,7 +417,6 @@ footer strong { color: var(--salmon); }
 <footer><p>جميع الحقوق محفوظة &copy; 2026 — <strong>منصة أثر</strong> | لوحة الإدارة</p></footer>
 
 <script>
-// تبديل تبويبات المصدر
 function switchResTab(type, btn) {
   document.querySelectorAll('.res-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.res-panel').forEach(p => p.classList.remove('active'));
@@ -427,7 +424,6 @@ function switchResTab(type, btn) {
   document.getElementById('panel-' + type).classList.add('active');
 }
 
-// اسم الملف عند الاختيار
 document.getElementById('res-file-input').addEventListener('change', function() {
   const nameEl = document.getElementById('resFileName');
   if (this.files.length > 0) {
@@ -438,7 +434,6 @@ document.getElementById('res-file-input').addEventListener('change', function() 
   }
 });
 
-// عرض رسالة خطأ فوق الفورم
 function showFormError(msg) {
   let box = document.getElementById('jsErrorBox');
   if (!box) {
@@ -451,13 +446,11 @@ function showFormError(msg) {
   box.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-// إزالة هايلايت الخطأ عند التعديل
 function clearError(el) {
   el.style.borderColor = '';
   el.style.boxShadow = '';
 }
 
-// تحديد الحقل بالأحمر
 function highlightError(el) {
   el.style.borderColor = '#C0392B';
   el.style.boxShadow = '0 0 0 3px rgba(192,57,43,0.15)';
@@ -465,17 +458,15 @@ function highlightError(el) {
   el.addEventListener('change', () => clearError(el), { once: true });
 }
 
-// التحقق عند الإرسال
+
 document.getElementById('courseForm').addEventListener('submit', function(e) {
   const isEdit = <?= $isEdit ? 'true' : 'false' ?>;
 
-  // إزالة أخطاء سابقة
   const oldBox = document.getElementById('jsErrorBox');
   if (oldBox) oldBox.remove();
 
   const errors = [];
 
-  // التحقق من الحقول الأساسية دائماً
   const courseName = document.querySelector('[name="courseName"]');
   const level      = document.querySelector('[name="level"]');
   const track      = document.querySelector('[name="track"]');
@@ -486,7 +477,7 @@ document.getElementById('courseForm').addEventListener('submit', function(e) {
   if (!track.value)             { errors.push('المسار مطلوب'); highlightError(track); }
   if (!desc.value.trim())       { errors.push('وصف المقرر مطلوب'); highlightError(desc); }
 
-  // التحقق من المصدر — إجباري عند الإضافة فقط
+
   if (!isEdit) {
     const resTitle = document.querySelector('[name="resourceTitle"]');
     const resLink  = document.querySelector('[name="resourceLink"]');
