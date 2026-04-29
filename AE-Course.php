@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mysqli_stmt_execute($dupStmt);
         mysqli_stmt_store_result($dupStmt);
         if (mysqli_stmt_num_rows($dupStmt) > 0) {
-            $errors[] = 'رمز المقرر "' . htmlspecialchars($courseCode) . '" مستخدم مسبقاً، اختاري رمزاً آخر';
+            $errors[] = 'رمز المقرر "' . htmlspecialchars($courseCode) . '" مستخدم مسبقاً، اختار رمزً آخر';
         }
         mysqli_stmt_close($dupStmt);
     }
