@@ -429,7 +429,7 @@ function confirmDeleteExp(id) {
   });
 }
 
-// Auto-hide toast
+
 const toast = document.querySelector('.toast');
 if (toast) setTimeout(() => toast.remove(), 3200);
 </script>
