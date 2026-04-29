@@ -2,8 +2,6 @@
 session_start();
 require_once 'AtharDB.php';
 
-
-// Admin auth check
 if (!isset($_SESSION['adminID'])) {
     header('Location: login.php');
     exit;
@@ -13,7 +11,6 @@ $msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // Delete course
     if (isset($_POST['action']) && $_POST['action'] === 'delete_course') {
         $id = (int)$_POST['courseID'];
         $stmt = mysqli_prepare($connection, "DELETE FROM course WHERE courseID = ?");
@@ -24,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Delete experience
     if (isset($_POST['action']) && $_POST['action'] === 'delete_experience') {
         $id = (int)$_POST['experienceID'];
         $stmt = mysqli_prepare($connection, "DELETE FROM experience WHERE experienceID = ?");
@@ -35,29 +31,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Logout
     if (isset($_POST['action']) && $_POST['action'] === 'logout') {
         session_destroy();
-        header('Location: login.php');
+        header('Location: index.php');
         exit;
     }
 }
-
 
 $totalCourses     = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) AS c FROM course"))['c'];
 $totalExperiences = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) AS c FROM experience"))['c'];
 $totalStudents    = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) AS c FROM student"))['c'];
 $totalLevels      = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(DISTINCT level) AS c FROM course"))['c'];
 
-
 $coursesResult = mysqli_query($connection, "
-   SELECT c.courseID, c.courseCode, c.courseName, c.level, c.track,
+    SELECT c.courseID, c.courseCode, c.courseName, c.level, c.track,
            COUNT(e.experienceID) AS expCount
     FROM course c
     LEFT JOIN experience e ON c.courseID = e.courseID
-    GROUP BY c.courseID
+    GROUP BY c.courseID, c.courseCode, c.courseName, c.level, c.track
     ORDER BY c.level ASC, c.courseName ASC
 ");
+
+$coursesByLevel = [];
+while ($row = mysqli_fetch_assoc($coursesResult)) {
+    $coursesByLevel[$row['level']][] = $row;
+}
 
 $experiencesResult = mysqli_query($connection, "
     SELECT e.experienceID, e.experienceContent, e.studyNote,
@@ -72,7 +70,6 @@ while ($row = mysqli_fetch_assoc($experiencesResult)) {
     $expByCourse[$row['courseID']][] = $row;
 }
 
-// Arabic numbers
 function toArabicNum($n) {
     return str_replace(
         ['0','1','2','3','4','5','6','7','8','9'],
@@ -151,6 +148,56 @@ nav {
   cursor: pointer; text-decoration: none; display: inline-block;
 }
 
+.level-subsection {
+  margin-bottom: 20px;
+}
+
+.level-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(30,42,69,0.06);
+  border: none;
+  border-right: 4px solid var(--navy);
+  border-radius: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  font-family: 'Tajawal', sans-serif;
+}
+
+.level-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.level-meta {
+  font-size: 13px;
+  color: var(--text-mid);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.level-arrow {
+  font-size: 15px;
+  transition: transform .2s ease;
+}
+
+.level-toggle.open .level-arrow {
+  transform: rotate(180deg);
+}
+
+.level-content {
+  display: none;
+  margin-top: 12px;
+}
+
+.level-content.open {
+  display: block;
+}
+
 table {
   width: 100%; background: white; border-radius: 16px;
   overflow: hidden; box-shadow: 0 2px 12px rgba(92,31,58,0.06);
@@ -161,9 +208,6 @@ th { padding: 14px 20px; text-align: right; font-size: 14px; font-weight: 600; }
 td { padding: 14px 20px; font-size: 14px; color: var(--text-dark); border-bottom: 1px solid var(--cream); }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: #FFF5F0; }
-
-.badge { display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 700; }
-.badge-active { background: rgba(39,174,96,0.12); color: #27AE60; }
 
 .btn-sm {
   padding: 5px 12px; border-radius: 7px; font-size: 12px;
@@ -179,11 +223,6 @@ tr:hover td { background: #FFF5F0; }
   border: none; font-weight: 600; margin-left: 4px;
 }
 
-/* Experiences accordion */
-.exp-accordion { display: none; background: #FFF9F7; }
-.exp-accordion.open { display: table-row-group; }
-.exp-accordion td { padding: 0 !important; border: none !important; }
-.exp-inner { padding: 0 20px 20px; }
 .exp-card {
   background: white; border-radius: 12px; padding: 16px 20px;
   margin-top: 12px; border: 1px solid #F0E4E8;
@@ -193,9 +232,7 @@ tr:hover td { background: #FFF5F0; }
 .exp-card-body .exp-student { font-size: 12px; color: var(--salmon); font-weight: 700; margin-bottom: 6px; }
 .exp-card-body .exp-text { font-size: 14px; color: var(--text-dark); line-height: 1.7; }
 .exp-card-body .exp-note { font-size: 12px; color: var(--text-mid); margin-top: 6px; font-style: italic; }
-.exp-empty { font-size: 13px; color: var(--text-mid); padding: 16px 0; text-align: center; }
 
-/* Toast */
 .toast {
   position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
   background: #27AE60; color: white; padding: 14px 28px; border-radius: 12px;
@@ -210,7 +247,6 @@ tr:hover td { background: #FFF5F0; }
   100% { opacity: 0; }
 }
 
-/* Confirm modal */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(42,15,26,0.65);
   display: flex; align-items: center; justify-content: center;
@@ -258,7 +294,6 @@ footer strong { color: var(--salmon); }
 <div class="toast"> تم تعديل المقرر بنجاح</div>
 <?php endif; ?>
 
-<!-- Confirm Modal -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-box">
     <div class="modal-icon">⚠️</div>
@@ -271,7 +306,6 @@ footer strong { color: var(--salmon); }
   </div>
 </div>
 
-<!-- Hidden forms for POST actions -->
 <form id="deleteCourseForm" method="POST" action="Admin.php" style="display:none;">
   <input type="hidden" name="action" value="delete_course">
   <input type="hidden" name="courseID" id="deleteCourseID">
@@ -314,7 +348,7 @@ footer strong { color: var(--salmon); }
     <div class="label">طالبة مسجلة</div>
   </div>
   <div class="stat-card">
-    <div class="num">٦</div>
+    <div class="num"><?= toArabicNum($totalLevels) ?></div>
     <div class="label">مستويات</div>
   </div>
 </div>
@@ -325,79 +359,109 @@ footer strong { color: var(--salmon); }
     <a href="AE-Course.php" class="btn-add">+ إضافة مقرر</a>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>رمز المقرر</th>
-        <th>اسم المقرر</th>
-        <th>المستوى</th>
-        <th>المسار</th>
-        <th>عدد التجارب</th>
-        <th>إجراءات</th>
-      </tr>
-    </thead>
-    <tbody>
-    <?php while ($course = mysqli_fetch_assoc($coursesResult)): ?>
-      <?php $cid = $course['courseID']; ?>
-      <tr>
-        <td><?= htmlspecialchars($course['courseCode'] ?? '') ?></td>
-        <td><?= htmlspecialchars($course['courseName']) ?></td>
-        <td><?= levelName($course['level']) ?></td>
-        <td><?= htmlspecialchars($course['track']) ?></td>
-        <td><?= toArabicNum($course['expCount']) ?></td>
-        <td>
-          <?php if (!empty($expByCourse[$cid])): ?>
-          <button class="btn-toggle-sm" onclick="toggleExp(<?= $cid ?>)">التجارب ▾</button>
-          <?php endif; ?>
-          <a href="AE-Course.php?edit=1&id=<?= $cid ?>" class="btn-sm btn-edit-sm">تعديل</a>
-          <button class="btn-sm btn-delete-sm"
-            onclick="confirmDeleteCourse(<?= $cid ?>, '<?= addslashes(htmlspecialchars($course['courseName'])) ?>')">
-            حذف
-          </button>
-        </td>
-      </tr>
-      <?php if (!empty($expByCourse[$cid])): ?>
-      <tr>
-        <td colspan="6" style="padding:0;border:none;">
-          <div id="exp-<?= $cid ?>" style="display:none;padding:0 20px 20px;">
-            <?php foreach ($expByCourse[$cid] as $exp): ?>
-            <div class="exp-card">
-              <div class="exp-card-body">
-                <div class="exp-student">👤 <?= htmlspecialchars($exp['studentName']) ?></div>
-                <div class="exp-text"><?= nl2br(htmlspecialchars($exp['experienceContent'])) ?></div>
-                <?php if ($exp['studyNote']): ?>
-                <div class="exp-note">📝 <?= htmlspecialchars($exp['studyNote']) ?></div>
-                <?php endif; ?>
-              </div>
-              <button class="btn-sm btn-delete-sm"
-                onclick="confirmDeleteExp(<?= $exp['experienceID'] ?>)">
-                حذف
-              </button>
-            </div>
+  <?php if ($totalCourses == 0): ?>
+    <table>
+      <tbody>
+        <tr>
+          <td colspan="6" style="text-align:center;color:var(--text-mid);padding:32px;">لا توجد مقررات بعد</td>
+        </tr>
+      </tbody>
+    </table>
+  <?php else: ?>
+
+    <?php foreach ($coursesByLevel as $level => $courses): ?>
+      <div class="level-subsection">
+        <button class="level-toggle" type="button" onclick="toggleLevel(<?= $level ?>, this)">
+          <span class="level-title">مقررات المستوى <?= levelName($level) ?></span>
+          <span class="level-meta">
+            <?= toArabicNum(count($courses)) ?> مقرر
+            <span class="level-arrow">▾</span>
+          </span>
+        </button>
+
+        <div class="level-content" id="level-content-<?= $level ?>">
+          <table>
+            <thead>
+              <tr>
+                <th>رمز المقرر</th>
+                <th>اسم المقرر</th>
+                <th>المستوى</th>
+                <th>المسار</th>
+                <th>عدد التجارب</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($courses as $course): ?>
+              <?php $cid = $course['courseID']; ?>
+              <tr>
+                <td><?= htmlspecialchars($course['courseCode'] ?? '') ?></td>
+                <td><?= htmlspecialchars($course['courseName']) ?></td>
+                <td><?= levelName($course['level']) ?></td>
+                <td><?= htmlspecialchars($course['track']) ?></td>
+                <td><?= toArabicNum($course['expCount']) ?></td>
+                <td>
+                  <?php if (!empty($expByCourse[$cid])): ?>
+                    <button class="btn-toggle-sm" onclick="toggleExp(<?= $cid ?>)">التجارب ▾</button>
+                  <?php endif; ?>
+                  <a href="AE-Course.php?edit=1&id=<?= $cid ?>" class="btn-sm btn-edit-sm">تعديل</a>
+                  <button class="btn-sm btn-delete-sm"
+                    onclick="confirmDeleteCourse(<?= $cid ?>, '<?= addslashes(htmlspecialchars($course['courseName'])) ?>')">
+                    حذف
+                  </button>
+                </td>
+              </tr>
+
+              <?php if (!empty($expByCourse[$cid])): ?>
+              <tr>
+                <td colspan="6" style="padding:0;border:none;">
+                  <div id="exp-<?= $cid ?>" style="display:none;padding:0 20px 20px;">
+                    <?php foreach ($expByCourse[$cid] as $exp): ?>
+                    <div class="exp-card">
+                      <div class="exp-card-body">
+                        <div class="exp-student">👤 <?= htmlspecialchars($exp['studentName']) ?></div>
+                        <div class="exp-text"><?= nl2br(htmlspecialchars($exp['experienceContent'])) ?></div>
+                        <?php if ($exp['studyNote']): ?>
+                        <div class="exp-note">📝 <?= htmlspecialchars($exp['studyNote']) ?></div>
+                        <?php endif; ?>
+                      </div>
+                      <button class="btn-sm btn-delete-sm"
+                        onclick="confirmDeleteExp(<?= $exp['experienceID'] ?>)">
+                        حذف
+                      </button>
+                    </div>
+                    <?php endforeach; ?>
+                  </div>
+                </td>
+              </tr>
+              <?php endif; ?>
+
             <?php endforeach; ?>
-          </div>
-        </td>
-      </tr>
-      <?php endif; ?>
-    <?php endwhile; ?>
-    <?php if ($totalCourses == 0): ?>
-      <tr><td colspan="6" style="text-align:center;color:var(--text-mid);padding:32px;">لا توجد مقررات بعد</td></tr>
-    <?php endif; ?>
-    </tbody>
-  </table>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <?php endforeach; ?>
+
+  <?php endif; ?>
 </div>
 
 <footer><p>جميع الحقوق محفوظة &copy; 2026 — <strong>منصة أثر</strong> | لوحة الإدارة</p></footer>
 
 <script>
-// Toggle experiences
 function toggleExp(id) {
   const el = document.getElementById('exp-' + id);
   if (!el) return;
   el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
-// Modal logic
+function toggleLevel(level, btn) {
+  const content = document.getElementById('level-content-' + level);
+  if (!content) return;
+  content.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+
 let pendingAction = null;
 function openModal(title, action) {
   document.getElementById('modalTitle').textContent = title;
@@ -428,7 +492,6 @@ function confirmDeleteExp(id) {
     document.getElementById('deleteExpForm').submit();
   });
 }
-
 
 const toast = document.querySelector('.toast');
 if (toast) setTimeout(() => toast.remove(), 3200);
